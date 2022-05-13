@@ -1,0 +1,50 @@
+//MAX485 TTL To RS485 >> VCC >> +5V or +3.3V of Arduino Nano
+//MAX485 TTL To RS485 >> GND >> GND of Arduino Nano
+//MAX485 TTL To RS485 >> RO >> GPIO10 of Arduino Nano (SoftwareSerial RX)
+//MAX485 TTL To RS485 >> DI >> GPIO11 of Arduino Nano (SoftwareSerial TX)
+//MAX485 TTL To RS485 >> RE >> GPIO9 of Arduino Nano
+//MAX485 TTL To RS485 >> DE >> GPIO9 of Arduino Nano
+
+#include <SoftwareSerial.h>
+
+#define RX        12    //Serial Receive pin
+#define TX        14    //Serial Transmit pin
+#define RTS_pin    25    //RS485 Direction control
+
+#define RS485Transmit    HIGH
+#define RS485Receive     LOW
+SoftwareSerial RS485Serial(RX, TX);
+
+void setup() {
+  pinMode(RTS_pin, OUTPUT);  
+  Serial.begin(9600);
+  Serial.println("RS-FS-N01"); 
+  RS485Serial.begin(4800);
+  delay(1000);
+}
+
+void loop() {
+  digitalWrite(RTS_pin, RS485Transmit);
+
+  byte fs_request[] = {
+    0x01,  // Devices Address
+    0x03,  // Function Code
+    0x00,  // Start Address
+    0x00,  // Start Address
+    0x00,  // Read Points
+    0x01,  // Read Points  
+    0x84,  // CRC LOW
+    0x0A   // CRC HIGH
+    }; 
+    
+  RS485Serial.write(fs_request, sizeof(fs_request));
+  RS485Serial.flush();
+  digitalWrite(RTS_pin, RS485Receive);
+  byte fs_buf[8];
+  RS485Serial.readBytes(fs_buf, 8);
+  Serial.print(" winds =  "); 
+  Serial.print(fs_buf[4]*0.36);
+  Serial.print(" km/h ");
+  Serial.println();                  
+  delay(100);
+}
